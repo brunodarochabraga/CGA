@@ -6,25 +6,33 @@ display helpers.
 
 CLI
 ---
+    python main.py <grammar_file.py>                  # default = measurer
     python main.py parser     <grammar_file.py>
     python main.py inferencer <grammar_file.py>
+    python main.py measures   <grammar_file.py>       # explicit form
 
-Sub-command aliases:  parser | parse | p   |   inferencer | infer | i
+Sub-command aliases:
+    parser     | parse | p
+    inferencer | infer | i
+    measures   | measure | m
 
 Examples:
+    python main.py GrammarTemplate.py                 # runs the measurer
     python main.py parser     GrammarTemplate.py
     python main.py parser     GrammarIndexed.py
-    python main.py inferencer GrammarExtendedMissingIp.py
+    python main.py inferencer GrammarModified.py
+    python main.py measures   GrammarModified.py
 
-The two underlying drivers (`main_parser.py`, `main_inferencer.py`)
-remain runnable standalone:
+The three underlying drivers (`main_parser.py`, `main_inferencer.py`,
+`main_measurer.py`) remain runnable standalone:
     python main_parser.py     GrammarIndexed.py
-    python main_inferencer.py GrammarExtendedMissingIp.py
+    python main_inferencer.py GrammarModified.py
+    python main_measurer.py   GrammarModified.py
 
 Shared driver helpers
 ---------------------
 `derivation_score`, `print_step`, `print_banner`, and `load_or_exit`
-are defined here and imported by both drivers, so the display
+are defined here and imported by all three drivers, so the display
 configuration and the grammar-loading error path live in exactly one
 place.  `_RULE_SYMBOLS` is private; callers go through `print_step`.
 
@@ -128,11 +136,15 @@ def load_or_exit(grammar_file):
 # ============================================================
 
 USAGE = (
-    "Usage: python main.py <command> <grammar_file.py>\n"
-    "  <command> = parser | inferencer\n"
+    "Usage: python main.py [<command>] <grammar_file.py>\n"
+    "  <command> = parser | inferencer | measures   "
+    "(default: measures)\n"
     "  Examples:\n"
+    "    python main.py GrammarTemplate.py                 "
+    "# default: measures\n"
     "    python main.py parser     GrammarTemplate.py\n"
-    "    python main.py inferencer GrammarExtendedMissingIp.py"
+    "    python main.py inferencer GrammarModified.py\n"
+    "    python main.py measures   GrammarModified.py"
 )
 
 # Maps a CLI alias to (module_name, canonical_label).
@@ -143,16 +155,28 @@ _COMMANDS = {
     "inferencer": ("main_inferencer", "inferencer"),
     "infer":      ("main_inferencer", "inferencer"),
     "i":          ("main_inferencer", "inferencer"),
+    "measures":   ("main_measurer",   "measures"),
+    "measure":    ("main_measurer",   "measures"),
+    "m":          ("main_measurer",   "measures"),
 }
+
+# Sub-command used when the user supplies only a grammar file (no command).
+_DEFAULT_COMMAND = "measures"
 
 
 def main():
-    if len(sys.argv) != 3:
+    # Two forms are accepted:
+    #   1. python main.py <grammar_file.py>             -> default command
+    #   2. python main.py <command> <grammar_file.py>
+    if len(sys.argv) == 2:
+        raw_cmd = _DEFAULT_COMMAND
+        grammar_file = sys.argv[1]
+    elif len(sys.argv) == 3:
+        raw_cmd = sys.argv[1]
+        grammar_file = sys.argv[2]
+    else:
         print(USAGE, file=sys.stderr)
         sys.exit(1)
-
-    raw_cmd = sys.argv[1]
-    grammar_file = sys.argv[2]
 
     try:
         module_name, label = _COMMANDS[raw_cmd.lower()]

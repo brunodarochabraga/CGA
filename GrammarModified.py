@@ -111,18 +111,44 @@ class GrammarModified(GrammarConfig):
             coordinable_categories={"RR", "RR'", "S"},
 
             sentences=[
-                # g  appears after RR-prefixes only.
-                "i c g",
-                "i c c g",
+                # ---- REFERENCE-LANGUAGE STRINGS (no outcome of interest) ----
+                # These use only unprimed types; their configurations do not
+                # carry a primed-S atom, so they are NOT outcome-bearing,
+                # though they parse and reduce D(L) and D(L').
+                "i g",            # config: { RR , S\RR }
+                "i c g",          # config: { RR , RR\RR , S\RR }
+                "i c c g",        # config: { RR , RR\RR , S\RR }
+                "i i g",          # uses COORD (RR,RR=>RR), then BA
 
-                # g' appears after RR'-prefixes only.
-                "i' c g'",
-                "i' c c g'",
+                # ---- OUTCOME-OF-INTEREST STRINGS ----
+                # All of these use g', which the inferencer pins to
+                # S'\RR' (a type containing the primed-S atom).
+                # Their configurations CARRY the outcome of interest.
+                "i' g'",          # smallest primed sentence: needs g' = S'\RR'
+                "i' c g'",        # adds the primed c entry RR'\RR'
+                "i' c c g'",      # repeats c (still same configuration!)
 
-                # A mixed sentence: an unprimed run coordinated with
-                # a primed run.  This forces g' away from S\RR (which
-                # would not unify with the i' c prefix) and pins it
-                # to S\RR'.  The S COORD S closes the whole sentence.
+                # ---- MIXED SENTENCES ----
+                # Two-track coordination: unprimed and primed run joined.
+                # If g' is inferred as S'\RR' the two halves close into
+                # S and S' respectively; S COORD S' fails (atoms differ),
+                # so these strings genuinely fail to parse.  They serve
+                # as discrepancy-driving negative examples.
                 "i c g i' c g'",
+                "i' c g' i c g",
+
+                # ---- CONFIGURATION-OVERLAP DESIGN ----
+                # These three primed strings all use the same lexical
+                # types in their derivation: { RR' , RR'\RR' , S'\RR' }.
+                # They produce ONE configuration witnessed by THREE
+                # strings, giving a hasCondition > 1 and a non-trivial
+                # consistency ratio.
+                "i' c c c g'",
+                "i' c c g' i' c g'",   # also exercises COORD if RR' is coordinable
+
+                # ---- STRUCTURALLY UNGRAMMATICAL ----
+                # No initial state; D(L) > 0; ablation can later test
+                # whether any hypothesis fixes it.
+                "c c g i c g'",
             ],
         )
